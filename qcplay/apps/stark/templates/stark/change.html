@@ -1,0 +1,105 @@
+{% extends 'layout.html' %}
+{% block css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/css/select2.min.css" rel="stylesheet" />
+<style>
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="layui-row">
+    <div class="layui-col-md6">
+        <div class="layui-card" style="margin: 20px">
+            <div class="layui-card-header">新增数据</div>
+            <div class="layui-card-body">
+                <form class="layui-form" method="post" id="changeForm" novalidate>
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">{{ field.label }}
+                            <div class="layui-form-mid layui-word-aux" style="float: left"></div>
+                        </label>
+                        <div class="layui-input-block">
+                            {{ field }}
+                        </div>
+                        <span style="color: red">{{ field.errors.0 }}</span>
+                    </div>
+                    {% endfor %}
+
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" lay-submit lay-filter="formDemo" style="width: 190px">保存</button>
+                            <!--<input type="button" class="layui-btn" lay-submit lay-filter="formDemo" style="width: 190px" value="保存" onclick="formcheck();" />-->
+                        </div>
+                    </div>
+                </form>
+                <!--{% if messages %}-->
+                <!--{% for message in messages %}-->
+                <!--<input id="id_msgs" type="hidden" tags="{{message.tags}}" value="{{ message }}">-->
+                <!--{% endfor %}-->
+                <!--{% endif %}-->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
+<script>
+
+    layui.use('form', function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        function init_input(){
+            $("#id_repoUser").parent().parent().css("display","none");
+            $("#id_repoPassword").parent().parent().css("display","none");
+        }
+
+        if ($('#id_rtype').val() != 'svn'){
+                init_input()
+        }
+        //$("#id_addr").select2({placeholder: 'Select an option'});
+        //$("#id_addr").djangoSelect2();
+        form.on('select(f_wtype)', function(data){
+             $.ajax({
+                 type: "POST",
+                 url: "/stark/web/website/get_repo/",
+                 data: {"type":data.value,"csrfmiddlewaretoken":"{{ csrf_token }}"},
+                 dataType: "json",
+                 success: function(res){
+                            $("#id_addr").html('')
+                            var optionEle = "<option value=''>直接选择或搜索选择</option>";
+                            data = jQuery.parseJSON(res.data)
+                            for(var i = 0;i < data.length;i++){
+                                optionEle += "<option value='"+data[i].pk+"'>"+data[i].fields.addr+"</option>";
+                            }
+                            //原本想使用select2插件
+                            //$("#id_addr").append(optionEle).trigger('change.select2');
+                            //$("#id_addr").append(optionEle).find('select').select2();
+                            //$("#id_addr").select2("open");
+                            //$("#id_addr").append(optionEle).trigger('change.select2');
+                            //$("#id_addr").select2();
+                            //后来直接使用layui自带的功能
+                            $("#id_addr").append(optionEle);
+                            form.render();
+                          }
+             });
+        });
+
+        form.on('select(f_rtype)', function(data){
+
+            if( data.value == 'svn' ){
+               $("#id_repoUser").parent().parent().css("display","");
+               $("#id_repoPassword").parent().parent().css("display","");
+            }else{
+                init_input()
+            }
+        });
+    });
+
+</script>
+{% endblock %}
+
